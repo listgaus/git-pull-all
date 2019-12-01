@@ -1,0 +1,176 @@
+version: '3.7'
+services:
+  rabbitmq:
+    image: 'rabbitmq:3.7-management'
+    container_name: rabbitmq
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - rabbitmqctl
+        - node_health_check
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    ports:
+      - '15672:15672'
+      - '5672:5672'
+  db:
+    image: 'mdillon/postgis:11'
+    container_name: postgres
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U postgres
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - 'pgdata:/var/lib/postgresql/data'
+    ports:
+      - '5432:5432'
+  tdpmsimulator.api:
+    image: '10.10.10.248:5000/tdpm-simulator-api'
+    container_name: tdpm-simulator-api
+    restart: unless-stopped
+    ports:
+      - '7000:80'
+      - '7001:12345'
+  clearsky.infra.authservice:
+    image: '10.10.10.248:5000/authservice'
+    restart: unless-stopped
+    container_name: authservice
+    depends_on:
+      - rabbitmq
+    ports:
+      - '2000:80'
+  clearsky.planning.api:
+    image: '10.10.10.248:5000/planning-api'
+    container_name: planning-api
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+    ports:
+      - '4000:80'
+  clearsky.planning.host:
+    image: '10.10.10.248:5000/planning-host'
+    container_name: planning-manager
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+      - db
+  clearsky.request.host:
+    image: '10.10.10.248:5000/request-host'
+    restart: unless-stopped
+    container_name: request-manager
+    depends_on:
+      - rabbitmq
+      - db
+  clearsky.request.api:
+    image: '10.10.10.248:5000/request-api'
+    restart: unless-stopped
+    container_name: request-api
+    depends_on:
+      - rabbitmq
+    ports:
+      - '1001:80'
+  clearsky.satelliteinfo.api:
+    image: '10.10.10.248:5000/satellite-info-api'
+    restart: unless-stopped
+    container_name: satellite-info-api
+    depends_on:
+      - rabbitmq
+    ports:
+      - '1000:80'
+  clearsky.satelliteinfo.host:
+    image: '10.10.10.248:5000/satellite-info-host'
+    restart: unless-stopped
+    container_name: satellite-info-manager
+    depends_on:
+      - rabbitmq
+      - db
+  clearsky.customer.host:
+    image: '10.10.10.248:5000/customer-host'
+    container_name: customer-host
+    depends_on:
+      - rabbitmq
+      - db
+    restart: unless-stopped
+  clearsky.customer.api:
+    image: '10.10.10.248:5000/customer-api'
+    container_name: customer-api
+    depends_on:
+      - rabbitmq
+    restart: unless-stopped
+    ports:
+      - '2001:80'
+  clearsky.telemetry.host:
+    image: '10.10.10.248:5000/telemetry-host'
+    container_name: telemetry-host
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+      - db
+  clearsky.telemetry.api:
+    image: '10.10.10.248:5000/telemetry-api'
+    container_name: telemetry-api
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+    ports:
+      - '4001:80'
+  clearsky.online.host:
+    image: '10.10.10.248:5000/online-host'
+    container_name: online-host
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+      - db
+  clearsky.online.api:
+    image: '10.10.10.248:5000/online-api'
+    container_name: online-api
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+    ports:
+      - '4009:80'
+  clearsky.notification.host:
+    image: '10.10.10.248:5000/notification-host'
+    container_name: notification-host
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+      - db
+  clearsky.notification.api:
+    image: '10.10.10.248:5000/notification-api'
+    container_name: notification-api
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+    ports:
+      - '4011:80'
+  clearsky.background.services.host:
+    image: '10.10.10.248:5000/background-services-host'
+    container_name: background-services-host
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+      - db
+  clearsky.users.api:
+    image: '10.10.10.248:5000/users-api'
+    container_name: users-api
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+    ports:
+      - '4012:80'
+  clearsky.users.host:
+    image: '10.10.10.248:5000/users-host'
+    container_name: users-host
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+      - db
+volumes:
+  pgdata: null
